@@ -1,0 +1,7 @@
+<resources>
+    <style name="Theme.Pickles" parent="android:Theme.Material.NoActionBar">
+        <item name="android:statusBarColor">#FF0B1426</item>
+        <item name="android:navigationBarColor">#FF0B1426</item>
+        <item name="android:windowBackground">#FF0B1426</item>
+    </style>
+</resources>
