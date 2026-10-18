@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A pickleball (lime ball with holes) over a mini court line. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <path android:fillColor="#FF2F5D8C" android:pathData="M30,30h48v48h-48z" />
+    <path android:fillColor="#FFFFFFFF" android:pathData="M30,53h48v2h-48z" />
+    <path android:fillColor="#FFC6F432" android:pathData="M54,36a18,18 0,1 1,-0.01 0z" />
+    <path android:fillColor="#FF0B1426" android:pathData="M48,46a2.6,2.6 0,1 1,-0.01 0z M60,46a2.6,2.6 0,1 1,-0.01 0z M54,52a2.6,2.6 0,1 1,-0.01 0z M48,58a2.6,2.6 0,1 1,-0.01 0z M60,58a2.6,2.6 0,1 1,-0.01 0z M54,40a2.2,2.2 0,1 1,-0.01 0z M54,64a2.2,2.2 0,1 1,-0.01 0z M42,52a2.2,2.2 0,1 1,-0.01 0z M66,52a2.2,2.2 0,1 1,-0.01 0z" />
+</vector>
