@@ -13,8 +13,8 @@ android {
         applicationId = "app.pickles"
         minSdk = 26
         targetSdk = 35
-        versionCode = 6
-        versionName = "1.3.1"
+        versionCode = 7
+        versionName = "1.3.2"
     }
 
     // Release signing comes from environment variables or Gradle properties (for example in
