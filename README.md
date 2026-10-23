@@ -160,7 +160,9 @@ section and the score / server state. See [CONTRIBUTING.md](CONTRIBUTING.md).
 ## Support the project
 
 Pickles is free, with no ads and no tracking, and it will stay that way. If it helps on court and
-you'd like to say thanks, you can support development on Trakteer (QRIS, e-wallets and Visa/Mastercard accepted): https://trakteer.id/bukandimas/gift
+you'd like to say thanks, you can support development on Trakteer (QRIS, e-wallets and Visa/Mastercard accepted):
+
+<a href="https://trakteer.id/bukandimas" target="_blank"><img src="https://edge-cdn.trakteer.id/images/embed/trbtn-red-1.png?v=14-05-2025" height="40" alt="Trakteer Saya"></a>
 
 ## License
 
