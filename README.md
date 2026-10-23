@@ -1,5 +1,8 @@
 # Pickles
 
+[![Android build](https://github.com/mdimasprasetyo/Pickles/actions/workflows/android.yml/badge.svg?branch=main)](https://github.com/mdimasprasetyo/Pickles/actions/workflows/android.yml)
+[![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-blue.svg)](LICENSE)
+
 An offline-first pickleball scorekeeper for Android (singles and doubles). After each rally you tap
 **Team A Won Rally** or **Team B Won Rally**; Pickles works out the score, the server, the server
 number, the serving side, the correct receiver and the score call, following the
@@ -9,6 +12,7 @@ number, the serving side, the correct receiver and the score call, following the
 - No network permission, no login, no ads, no analytics
 - Match saved on the device after every rally; unfinished matches can be resumed
 - Full undo of every rally (and of starting the next game)
+- Free and open source (GPL-3.0)
 
 ## Project layout
 
@@ -81,8 +85,26 @@ echo "sdk.dir=$ANDROID_HOME" > local.properties
 ./gradlew assembleRelease       # app/build/outputs/apk/release/app-release.apk (minified)
 ```
 
-The release build is signed with the debug key so it installs directly. Before publishing, create
-your own keystore and add a `signingConfig` in `app/build.gradle.kts`.
+### Release signing
+
+The release build reads its signing key from environment variables or Gradle properties (for
+example in `~/.gradle/gradle.properties`, or CI secrets), never from files in the repository:
+
+| Variable | Meaning |
+|---|---|
+| `PICKLES_KEYSTORE_PATH` | Path to your keystore (`.jks`), absolute or relative to the repo root |
+| `PICKLES_KEYSTORE_PASSWORD` | Keystore password |
+| `PICKLES_KEY_ALIAS` | Key alias |
+| `PICKLES_KEY_PASSWORD` | Key password |
+
+```bash
+PICKLES_KEYSTORE_PATH=~/keys/pickles.jks PICKLES_KEYSTORE_PASSWORD=... \
+PICKLES_KEY_ALIAS=pickles PICKLES_KEY_PASSWORD=... ./gradlew assembleRelease
+```
+
+When they are not set (a normal local or contributor build), the release build falls back to the
+debug key so it still builds and installs. Keystores, `keystore.properties` and `local.properties`
+are git-ignored; never commit them.
 
 ## Install on a phone
 
@@ -126,3 +148,33 @@ random singles games.
 `app/src/test/.../ScreenshotTest.kt` renders the real screens with Robolectric + Roborazzi
 (`./gradlew :app:testDebugUnitTest`, images in `app/build/outputs/roborazzi`). It needs an x86_64
 or macOS host for Robolectric's native graphics.
+
+## Contributing
+
+Issues and pull requests are welcome. Before opening a pull request, run the engine tests and a
+debug build (`./gradlew :engine:test assembleDebug`); CI runs the same on every pull request.
+Any change to scoring, serving, sides or end changes must cite the **2026 USA Pickleball Official
+Rulebook** section it is based on. For a disputed call, open a *Rule question* issue with the
+section and the score / server state. See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## Support the project
+
+Pickles is free, with no ads and no tracking, and it will stay that way. If it helps on court and
+you'd like to say thanks, you can support development here:
+
+- Ko-fi: https://ko-fi.com/REPLACE_ME
+- Saweria: https://saweria.co/REPLACE_ME
+
+## License
+
+Copyright (C) 2026 Muhammad Dimas Prasetyo
+
+This program is free software: you can redistribute it and/or modify it under the terms of the GNU
+General Public License as published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version. This program is distributed in the hope that it
+will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE. See [LICENSE](LICENSE) for the full text.
+
+The bundled fonts are not covered by the GPL: Plus Jakarta Sans and Barlow Condensed are licensed
+under the SIL Open Font License 1.1 (see [`licenses/`](licenses/); the same texts ship in the app
+under `app/src/main/assets/`).
