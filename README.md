@@ -160,10 +160,7 @@ section and the score / server state. See [CONTRIBUTING.md](CONTRIBUTING.md).
 ## Support the project
 
 Pickles is free, with no ads and no tracking, and it will stay that way. If it helps on court and
-you'd like to say thanks, you can support development here:
-
-- Ko-fi: https://ko-fi.com/REPLACE_ME
-- Saweria: https://saweria.co/REPLACE_ME
+you'd like to say thanks, you can support development on Ko-fi: https://ko-fi.com/REPLACE_ME
 
 ## License
 
