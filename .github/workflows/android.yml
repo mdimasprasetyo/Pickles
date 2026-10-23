@@ -1,0 +1,62 @@
+name: Android build
+
+on:
+  push:
+    branches: [ "main", "open-source-prep" ]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      # Also validates the checksum of gradle/wrapper/gradle-wrapper.jar.
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Engine tests and debug APK
+        run: |
+          chmod +x gradlew
+          ./gradlew :engine:test assembleDebug --stacktrace
+      - uses: actions/upload-artifact@v4
+        with:
+          name: app-debug
+          path: app/build/outputs/apk/debug/app-debug.apk
+      # Proves the PICKLES_KEYSTORE_* release-signing path works, using a throwaway key
+      # generated for this run only (no real signing secrets are used in CI).
+      - name: Release build with a throwaway key
+        run: |
+          keytool -genkeypair -v -keystore "$RUNNER_TEMP/ci.jks" -alias ci -keyalg RSA -keysize 2048 \
+            -validity 1 -storepass ci-pass -keypass ci-pass -dname "CN=Pickles CI"
+          PICKLES_KEYSTORE_PATH="$RUNNER_TEMP/ci.jks" PICKLES_KEYSTORE_PASSWORD=ci-pass \
+          PICKLES_KEY_ALIAS=ci PICKLES_KEY_PASSWORD=ci-pass \
+            ./gradlew assembleRelease --stacktrace
+          APKSIGNER=$(ls -d "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -n 1)
+          "$APKSIGNER" verify --print-certs app/build/outputs/apk/release/app-release.apk | tee certs.txt
+          grep -q "CN=Pickles CI" certs.txt
+
+  # Manual only (Actions → Android build → Run workflow): publishes the debug APK as a
+  # throwaway pre-release so it can be downloaded without signing in to GitHub.
+  preview-release:
+    if: github.event_name == 'workflow_dispatch'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: app-debug
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: preview-${{ github.run_number }}
+          name: Preview build ${{ github.run_number }} (${{ github.ref_name }})
+          target_commitish: ${{ github.sha }}
+          prerelease: true
+          files: app-debug.apk
