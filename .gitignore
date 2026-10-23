@@ -4,4 +4,8 @@ local.properties
 *.iml
 .idea/
 captures/
+
+# Signing material: never commit keystores or their passwords
+*.jks
 *.keystore
+keystore.properties

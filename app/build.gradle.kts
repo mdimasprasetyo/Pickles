@@ -17,14 +17,43 @@ android {
         versionName = "1.3.1"
     }
 
+    // Release signing comes from environment variables or Gradle properties (for example in
+    // ~/.gradle/gradle.properties or CI secrets), never from files in this repository:
+    //   PICKLES_KEYSTORE_PATH, PICKLES_KEYSTORE_PASSWORD, PICKLES_KEY_ALIAS, PICKLES_KEY_PASSWORD
+    // When they are absent (e.g. a contributor's local build) the release build falls back to the
+    // debug key so it still builds and installs.
+    fun signingValue(name: String): String? =
+        (System.getenv(name) ?: project.findProperty(name) as String?)?.takeIf { it.isNotBlank() }
+
+    val keystorePath = signingValue("PICKLES_KEYSTORE_PATH")
+    val keystorePassword = signingValue("PICKLES_KEYSTORE_PASSWORD")
+    val keyAliasValue = signingValue("PICKLES_KEY_ALIAS")
+    val keyPasswordValue = signingValue("PICKLES_KEY_PASSWORD")
+    val hasReleaseSigning =
+        keystorePath != null && keystorePassword != null && keyAliasValue != null && keyPasswordValue != null
+
+    signingConfigs {
+        if (hasReleaseSigning) {
+            create("release") {
+                storeFile = rootProject.file(keystorePath!!) // absolute, or relative to the repo root
+                storePassword = keystorePassword
+                keyAlias = keyAliasValue
+                keyPassword = keyPasswordValue
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            // Signed with the debug key so the release APK installs out of the box.
-            // Replace with your own signingConfig before publishing.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = if (hasReleaseSigning) {
+                signingConfigs.getByName("release")
+            } else {
+                logger.warn("Pickles: PICKLES_KEYSTORE_* not set; release build is signed with the debug key.")
+                signingConfigs.getByName("debug")
+            }
         }
     }
 
