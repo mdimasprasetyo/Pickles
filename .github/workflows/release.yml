@@ -1,0 +1,80 @@
+name: Signed release
+
+# Runs when you publish a release on GitHub (Releases → Draft a new release, tag e.g. v1.3.2).
+# Builds the release APK, signs it with your own key from repository secrets, checks that it is
+# not debug-signed, and attaches it to that release.
+#
+# Required repository secrets (Settings → Secrets and variables → Actions):
+#   PICKLES_KEYSTORE_BASE64    the .jks file, base64-encoded
+#   PICKLES_KEYSTORE_PASSWORD  keystore password
+#   PICKLES_KEY_ALIAS          key alias (e.g. pickles)
+#   PICKLES_KEY_PASSWORD       key password (same as the keystore password for PKCS12 keystores)
+
+on:
+  release:
+    types: [ published ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  signed-apk:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      PICKLES_KEYSTORE_BASE64: ${{ secrets.PICKLES_KEYSTORE_BASE64 }}
+      PICKLES_KEYSTORE_PASSWORD: ${{ secrets.PICKLES_KEYSTORE_PASSWORD }}
+      PICKLES_KEY_ALIAS: ${{ secrets.PICKLES_KEY_ALIAS }}
+      PICKLES_KEY_PASSWORD: ${{ secrets.PICKLES_KEY_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Check signing secrets
+        run: |
+          for v in PICKLES_KEYSTORE_BASE64 PICKLES_KEYSTORE_PASSWORD PICKLES_KEY_ALIAS PICKLES_KEY_PASSWORD; do
+            if [ -z "${!v}" ]; then echo "::error::Repository secret $v is missing"; exit 1; fi
+          done
+
+      - name: Version matches the release tag
+        id: version
+        run: |
+          VERSION=$(sed -n 's/.*versionName = "\(.*\)".*/\1/p' app/build.gradle.kts | head -n 1)
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          if [ "${{ github.event_name }}" = "release" ] && [ "${{ github.event.release.tag_name }}" != "v$VERSION" ]; then
+            echo "::error::Tag ${{ github.event.release.tag_name }} does not match versionName $VERSION (expected v$VERSION)"
+            exit 1
+          fi
+
+      - name: Build signed release APK
+        run: |
+          echo "$PICKLES_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/pickles.jks"
+          chmod +x gradlew
+          PICKLES_KEYSTORE_PATH="$RUNNER_TEMP/pickles.jks" ./gradlew :engine:test assembleRelease --stacktrace
+          rm -f "$RUNNER_TEMP/pickles.jks"
+
+      - name: Refuse debug-signed output
+        run: |
+          APK=app/build/outputs/apk/release/app-release.apk
+          APKSIGNER=$(ls -d "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -n 1)
+          "$APKSIGNER" verify --print-certs "$APK" | tee certs.txt
+          if grep -q "CN=Android Debug" certs.txt; then echo "::error::APK is debug-signed"; exit 1; fi
+          cp "$APK" "Pickles-${{ steps.version.outputs.version }}.apk"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Pickles-${{ steps.version.outputs.version }}
+          path: Pickles-${{ steps.version.outputs.version }}.apk
+
+      - name: Attach APK to the release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event.release.tag_name }}
+          files: Pickles-${{ steps.version.outputs.version }}.apk

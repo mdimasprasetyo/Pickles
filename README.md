@@ -106,6 +106,15 @@ When they are not set (a normal local or contributor build), the release build f
 debug key so it still builds and installs. Keystores, `keystore.properties` and `local.properties`
 are git-ignored; never commit them.
 
+### Signed releases on GitHub
+
+`.github/workflows/release.yml` builds and signs the APK in CI whenever a release is published.
+Add four repository secrets under **Settings → Secrets and variables → Actions**:
+`PICKLES_KEYSTORE_BASE64` (the `.jks` file, base64-encoded), `PICKLES_KEYSTORE_PASSWORD`,
+`PICKLES_KEY_ALIAS` and `PICKLES_KEY_PASSWORD`. Then bump `versionCode` / `versionName` in
+`app/build.gradle.kts`, publish a release tagged `v<versionName>` (e.g. `v1.3.2`), and the
+workflow attaches `Pickles-<version>.apk` to it. It fails rather than publish a debug-signed APK.
+
 ## Install on a phone
 
 **From the APK file**
